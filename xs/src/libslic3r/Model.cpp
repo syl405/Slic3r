@@ -653,8 +653,8 @@ ModelObject::align_to_ground()
 		if (!v->modifier)
 			bb.merge(v->mesh.bounding_box());
     
-    this->translate(0, 0, -bb.min.z);
-    this->origin_translation.translate(0, 0, -bb.min.z);
+    //this->translate(0, 0, -bb.min.z);
+    //this->origin_translation.translate(0, 0, -bb.min.z);
 }
 
 void
