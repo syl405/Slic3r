@@ -222,6 +222,7 @@ sub export {
         my @obj_idx = sort { $self->objects->[$a]->config->sequential_print_priority <=> $self->objects->[$b]->config->sequential_print_priority or $self->objects->[$a]->size->z <=> $self->objects->[$b]->size->z} 0..($self->print->object_count - 1);
         
         my $finished_objects = 0;
+        my $cur_obj_specific_z_offset = 0;
         for my $obj_idx (@obj_idx) {
             my $object = $self->objects->[$obj_idx];
             for my $copy (@{ $self->objects->[$obj_idx]->_shifted_copies }) {
@@ -238,6 +239,12 @@ sub export {
                         EXTR_ROLE_NONE,
                         'move to origin position for next object',
                     );
+                    # reset z-zero back to true bed zero before applying object-specific offset for next object
+                    if ($cur_obj_specific_z_offset != 0) {
+                        print $fh $gcodegen->object_specific_z_offset(-1 * $cur_obj_specific_z_offset);
+                        print $fh "G92 Z0 ; resetting object specific z-offset\n";
+                        $cur_obj_specific_z_offset = 0;
+                    }
                     $gcodegen->set_enable_cooling_markers(1);
                     
                     # disable motion planner when traveling to first object point
@@ -257,9 +264,20 @@ sub export {
                         $self->_print_first_layer_temperature(0)
                             if $self->config->between_objects_gcode !~ /M(?:109|104)/i;
                         printf $fh "%s\n", $gcodegen->placeholder_parser->process($self->config->between_objects_gcode);
+
+                        # introduce an additional z-offset for intentional air printing (e.g. sequential objects with embedded 3d printing)
+                        # note: first object printed cannot be floating to avoid inadvertent air printing
+                        if ($Slic3r::GUI::Settings->{_}{model_coords}) {
+                            $cur_obj_specific_z_offset = $object->model_object()->bounding_box()->z_min();
+                            print $fh $gcodegen->object_specific_z_offset($cur_obj_specific_z_offset);
+                            print $fh "G92 Z0 \n"
+                        }
                     }
+                    
+                    
                     $self->process_layer($layer, [$copy]);
                 }
+                
                 $self->flush_filters;
                 $finished_objects++;
                 $self->_second_layer_things_done(0);
@@ -444,9 +462,12 @@ sub process_layer {
         my $pp = $self->_gcodegen->placeholder_parser->clone;
         $pp->set('layer_num' => $self->_gcodegen->layer_index + 1);
         $pp->set('layer_z'   => $layer->print_z);
+        
         $gcode .= $pp->process($self->print->config->before_layer_gcode) . "\n";
     }
+    
     $gcode .= $self->_gcodegen->change_layer($layer->as_layer);  # this will increase $self->_gcodegen->layer_index
+    
     if ($self->print->config->layer_gcode) {
         my $pp = $self->_gcodegen->placeholder_parser->clone;
         $pp->set('layer_num' => $self->_gcodegen->layer_index);
