@@ -1238,9 +1238,15 @@ sub load_model_objects {
     my $bed_shape = Slic3r::Polygon->new_scale(@{$self->{config}->bed_shape});
     my $bed_size = $bed_shape->bounding_box->size;
     
+    my $model_coords = 0;
     my $need_arrange = 0;
     my $scaled_down = 0;
     my @obj_idx = ();
+
+    if ($Slic3r::GUI::Settings->{_}{model_coords}) {
+        $model_coords = 1;
+    }
+
     foreach my $model_object (@model_objects) {
         my $o = $self->{model}->add_object($model_object);
         $o->repair;
@@ -1252,14 +1258,16 @@ sub load_model_objects {
 
         push @obj_idx, $#{ $self->{objects} };
     
-        if ($model_object->instances_count == 0) {
+        if ($model_object->instances_count == 0 && !$model_coords) {
             # if object has no defined position(s) we need to rearrange everything after loading
             $need_arrange = 1;
         
             # add a default instance and center object around origin
             $o->center_around_origin;  # also aligns object to Z = 0
             $o->add_instance(offset => $bed_centerf);
-        } else {
+        } elsif ($model_object->instances_count == 0) {
+            $o->add_instance(offset => $bed_centerf);
+        } elsif (!$model_coords) {
             # if object has defined positions we still need to ensure it's aligned to Z = 0
             $o->align_to_ground;
         }
@@ -1283,6 +1291,7 @@ sub load_model_objects {
         $need_arrange = 0;
     }
     
+    
     if ($scaled_down) {
         Slic3r::GUI::show_info(
             $self,
@@ -1292,7 +1301,7 @@ sub load_model_objects {
     }
     
     $self->make_thumbnail($_) for @obj_idx;
-    $self->arrange if $need_arrange;
+    $self->arrange if ($need_arrange && !$model_coords);
     $self->on_model_change;
     
     # zoom to objects
@@ -1666,6 +1675,7 @@ sub arrange {
     
     my $bb = Slic3r::Geometry::BoundingBoxf->new_from_points($self->{config}->bed_shape);
     my $success = $self->{model}->arrange_objects($self->config->min_object_distance, $bb);
+   
     # ignore arrange failures on purpose: user has visual feedback and we don't need to warn him
     # when parts don't fit in print bed
     
