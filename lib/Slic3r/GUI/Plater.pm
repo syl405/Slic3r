@@ -1971,7 +1971,7 @@ sub export_gcode {
         $self->config->validate;
         $self->{print}->validate;
     };
-    Slic3r::GUI::catch_error($self) and return;
+    Slic3r::GUI::catch_error($self)# and return;
     
     
     # apply config and validate print
@@ -1983,7 +1983,7 @@ sub export_gcode {
         $self->{print}->validate;
     };
     if (!$Slic3r::have_threads) {
-        Slic3r::GUI::catch_error($self) and return;
+        Slic3r::GUI::catch_error($self)# and return;
     }
     
     # select output file
