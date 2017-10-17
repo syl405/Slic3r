@@ -1718,8 +1718,10 @@ sub split_object {
         $object->instances->[$_]->offset->translate($_ * 10, $_ * 10)
             for 1..$#{ $object->instances };
         
-        # we need to center this single object around origin
-        $object->center_around_origin;
+        # we need to center this single object around origin iff model_coords is not enabled
+        if (!$Slic3r::GUI::Settings->{_}{model_coords}) {
+            $object->center_around_origin;
+        }
     }
 
     # remove the original object before spawning the object_loaded event, otherwise 
@@ -2674,9 +2676,11 @@ sub object_settings_dialog {
 	
     # update thumbnail since parts may have changed
     if ($dlg->PartsChanged) {
-	    # recenter and re-align to Z = 0
-	    $model_object->center_around_origin;
-        $self->make_thumbnail($obj_idx);
+	    # recenter and re-align to Z = 0 iff model_coords is not enabled
+        if (!$Slic3r::GUI::Settings->{_}{model_coords}) {
+            $model_object->center_around_origin;
+            $self->make_thumbnail($obj_idx);
+        }
     }
 	
 	# update print
