@@ -1091,6 +1091,17 @@ PrintConfigDef::PrintConfigDef()
         def->default_value = opt;
     }
 
+    def = this->add("retract_lift_to_target", coBools);
+    def->label = "Lift to target";
+    def->category = "Retraction";
+    def->tooltip = "This flag causes retraction lifts to a target height instead of by a fixed distance. Use to clear reservoir surface during embedded 3d printing.";
+    def->cli = "retract-lift-to-target!";
+    {
+        ConfigOptionBools* opt = new ConfigOptionBools();
+        opt->values.push_back(false);
+        def->default_value = opt;
+    }
+
     def = this->add("retract_lift", coFloats);
     def->label = "Lift Z";
     def->category = "Retraction";

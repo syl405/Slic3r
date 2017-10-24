@@ -1213,7 +1213,7 @@ sub options {
         use_volumetric_e
         start_gcode end_gcode before_layer_gcode layer_gcode toolchange_gcode between_objects_gcode
         nozzle_diameter extruder_offset min_layer_height max_layer_height
-        retract_length retract_lift retract_speed retract_restart_extra retract_before_travel retract_layer_change wipe
+        retract_length retract_lift retract_lift_to_target retract_speed retract_restart_extra retract_before_travel retract_layer_change wipe
         retract_length_toolchange retract_restart_extra_toolchange retract_lift_above retract_lift_below
         printer_settings_id
         printer_notes
@@ -1223,7 +1223,7 @@ sub options {
 sub overridable_options {
     return qw(
         pressure_advance
-        retract_length retract_lift retract_speed retract_restart_extra
+        retract_length retract_lift retract_lift_to_target retract_speed retract_restart_extra
         retract_before_travel retract_layer_change wipe
     );
 }
@@ -1457,7 +1457,7 @@ sub _extruders_count_changed {
     $self->_update;
 }
 
-sub _extruder_options { qw(nozzle_diameter min_layer_height max_layer_height extruder_offset retract_length retract_lift retract_lift_above retract_lift_below retract_speed retract_restart_extra retract_before_travel wipe
+sub _extruder_options { qw(nozzle_diameter min_layer_height max_layer_height extruder_offset retract_length retract_lift retract_lift_to_target retract_lift_above retract_lift_below retract_speed retract_restart_extra retract_before_travel wipe
     retract_layer_change retract_length_toolchange retract_restart_extra_toolchange) }
 
 sub _build_extruder_pages {
@@ -1498,7 +1498,7 @@ sub _build_extruder_pages {
         {
             my $optgroup = $page->new_optgroup('Retraction');
             $optgroup->append_single_option_line($_, $extruder_idx)
-                for qw(retract_length retract_lift);
+                for qw(retract_length retract_lift retract_lift_to_target);
             
             {
                 my $line = Slic3r::GUI::OptionsGroup::Line->new(

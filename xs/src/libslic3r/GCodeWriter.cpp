@@ -551,9 +551,24 @@ GCodeWriter::lift()
     // and subtracting layer_height from retract_lift might not give
     // exactly zero
     if (std::abs(this->_lifted) < EPSILON && target_lift > 0) {
-        this->_lifted = target_lift;
-        return this->_travel_to_z(this->_pos.z + target_lift, "lift Z");
-    }
+        if (!this->config.retract_lift_to_target.get_at(this->_extruder->id)) { //not lifting to target, i.e. default behavior
+            this->_lifted = target_lift;
+            return this->_travel_to_z(this->_pos.z + target_lift, "lift Z");
+        }
+        else {
+            try {
+                this->_lifted = target_lift - this->_pos.z;
+                if (this->_lifted < (-1 * EPSILON)) {
+                    throw this->_lifted;
+                }
+                return this->_travel_to_z(target_lift, "lift Z to target");
+            }
+            catch (double diff) {
+                std::cout << "Invalid target lift height. Current layer height above target lift height by " << (-1.0 * diff) << " mm.\n";
+            }
+            
+        }
+        }
     
     return "";
 }
