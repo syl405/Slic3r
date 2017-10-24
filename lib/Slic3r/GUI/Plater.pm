@@ -1238,10 +1238,16 @@ sub load_model_objects {
     my $bed_shape = Slic3r::Polygon->new_scale(@{$self->{config}->bed_shape});
     my $bed_size = $bed_shape->bounding_box->size;
     
+    my $model_coords = 0;
     my $need_arrange = 0;
     my $scaled_down = 0;
     my $outside_bounds = 0;
     my @obj_idx = ();
+
+    if ($Slic3r::GUI::Settings->{_}{model_coords}) {
+        $model_coords = 1;
+    }
+
     foreach my $model_object (@model_objects) {
         my $o = $self->{model}->add_object($model_object);
         $o->repair;
@@ -1253,22 +1259,17 @@ sub load_model_objects {
 
         push @obj_idx, $#{ $self->{objects} };
     
-        if ($model_object->instances_count == 0) {
-            if ($Slic3r::GUI::Settings->{_}{autocenter}) {
-                # if object has no defined position(s) we need to rearrange everything after loading
-                $need_arrange = 1;
 
-                # add a default instance and center object around origin
-                $o->center_around_origin;  # also aligns object to Z = 0
-                $o->add_instance(offset => $bed_centerf);
-            } else {
-                # if user turned autocentering off, automatic arranging would disappoint them
-                $need_arrange = 0;
-
-                $o->align_to_ground; # aligns object to Z = 0
-                $o->add_instance();
-            }
-        } else {
+        if ($model_object->instances_count == 0 && !$model_coords) {
+            # if object has no defined position(s) we need to rearrange everything after loading
+            $need_arrange = 1;
+        
+            # add a default instance and center object around origin
+            $o->center_around_origin;  # also aligns object to Z = 0
+            $o->add_instance(offset => $bed_centerf);
+        } elsif ($model_object->instances_count == 0) {
+            $o->add_instance(offset => $bed_centerf);
+        } elsif (!$model_coords) {
             # if object has defined positions we still need to ensure it's aligned to Z = 0
             $o->align_to_ground;
         }
@@ -1317,7 +1318,7 @@ sub load_model_objects {
     }
     
     $self->make_thumbnail($_) for @obj_idx;
-    $self->arrange if $need_arrange;
+    $self->arrange if ($need_arrange && !$model_coords);
     $self->on_model_change;
     
     # zoom to objects
@@ -1691,6 +1692,7 @@ sub arrange {
     
     my $bb = Slic3r::Geometry::BoundingBoxf->new_from_points($self->{config}->bed_shape);
     my $success = $self->{model}->arrange_objects($self->config->min_object_distance, $bb);
+   
     # ignore arrange failures on purpose: user has visual feedback and we don't need to warn him
     # when parts don't fit in print bed
     
@@ -1733,8 +1735,10 @@ sub split_object {
         $object->instances->[$_]->offset->translate($_ * 10, $_ * 10)
             for 1..$#{ $object->instances };
         
-        # we need to center this single object around origin
-        $object->center_around_origin;
+        # we need to center this single object around origin iff model_coords is not enabled
+        if (!$Slic3r::GUI::Settings->{_}{model_coords}) {
+            $object->center_around_origin;
+        }
     }
 
     # remove the original object before spawning the object_loaded event, otherwise 
@@ -1891,7 +1895,7 @@ sub start_background_process {
     eval {
         # this will throw errors if config is not valid
         $self->config->validate;
-        $self->{print}->validate;
+        #$self->{print}->validate;
     };
     if ($@) {
         $self->statusbar->SetStatusText($@);
@@ -1986,7 +1990,7 @@ sub export_gcode {
         $self->config->validate;
         $self->{print}->validate;
     };
-    Slic3r::GUI::catch_error($self) and return;
+    Slic3r::GUI::catch_error($self);# and return;
     
     
     # apply config and validate print
@@ -1998,7 +2002,7 @@ sub export_gcode {
         $self->{print}->validate;
     };
     if (!$Slic3r::have_threads) {
-        Slic3r::GUI::catch_error($self) and return;
+        Slic3r::GUI::catch_error($self);# and return;
     }
     
     # select output file
@@ -2689,9 +2693,11 @@ sub object_settings_dialog {
 	
     # update thumbnail since parts may have changed
     if ($dlg->PartsChanged) {
-	    # recenter and re-align to Z = 0
-	    $model_object->center_around_origin;
-        $self->make_thumbnail($obj_idx);
+	    # recenter and re-align to Z = 0 iff model_coords is not enabled
+        if (!$Slic3r::GUI::Settings->{_}{model_coords}) {
+            $model_object->center_around_origin;
+            $self->make_thumbnail($obj_idx);
+        }
     }
 	
 	# update print

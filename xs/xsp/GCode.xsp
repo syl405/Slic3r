@@ -180,6 +180,7 @@
     void set_extruders(std::vector<unsigned int> extruder_ids);
     void set_origin(Pointf* pointf)
         %code{% THIS->set_origin(*pointf); %};
+    std::string object_specific_z_offset(double object_z_offset, double current_z_pos);
     std::string preamble();
     std::string notes();
     std::string change_layer(Layer* layer)

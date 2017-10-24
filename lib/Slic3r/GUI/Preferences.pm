@@ -43,6 +43,13 @@ sub new {
         default     => $Slic3r::GUI::Settings->{_}{autocenter},
     ));
     $optgroup->append_single_option_line(Slic3r::GUI::OptionsGroup::Option->new(
+        opt_id      => 'model_coords',
+        type        => 'bool',
+        label       => 'Use model coordinates',
+        tooltip     => 'If this is enabled, Slic3r will position objects based on imported model coordinates.',
+        default     => $Slic3r::GUI::Settings->{_}{model_coords},
+    ));
+    $optgroup->append_single_option_line(Slic3r::GUI::OptionsGroup::Option->new(
         opt_id      => 'invert_zoom',
         type        => 'bool',
         label       => 'Invert zoom in previews',

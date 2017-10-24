@@ -222,6 +222,8 @@ sub export {
         my @obj_idx = sort { $self->objects->[$a]->config->sequential_print_priority <=> $self->objects->[$b]->config->sequential_print_priority or $self->objects->[$a]->size->z <=> $self->objects->[$b]->size->z} 0..($self->print->object_count - 1);
         
         my $finished_objects = 0;
+        my $cur_obj_specific_z_offset = 0;
+        my $cur_z_pos = 0;
         for my $obj_idx (@obj_idx) {
             my $object = $self->objects->[$obj_idx];
             for my $copy (@{ $self->objects->[$obj_idx]->_shifted_copies }) {
@@ -238,6 +240,12 @@ sub export {
                         EXTR_ROLE_NONE,
                         'move to origin position for next object',
                     );
+                    # reset z-zero back to true bed zero before applying object-specific offset for next object
+                    if ($cur_obj_specific_z_offset != 0) {
+                        print $fh $gcodegen->object_specific_z_offset(0, $cur_z_pos);
+                        print $fh "; resetting object specific z-offset\n";
+                        $cur_obj_specific_z_offset = 0;
+                    }
                     $gcodegen->set_enable_cooling_markers(1);
                     
                     # disable motion planner when traveling to first object point
@@ -249,6 +257,7 @@ sub export {
                     # if we are printing the bottom layer of an object, and we have already finished
                     # another one, set first layer temperatures. this happens before the Z move
                     # is triggered, so machine has more time to reach such temperatures
+
                     if ($layer->id == 0 && $finished_objects > 0) {
                         printf $fh $gcodegen->writer->set_bed_temperature($self->config->first_layer_bed_temperature),
                             if $self->config->first_layer_bed_temperature
@@ -256,10 +265,24 @@ sub export {
                             && $self->config->between_objects_gcode !~ /M(?:190|140)/i;
                         $self->_print_first_layer_temperature(0)
                             if $self->config->between_objects_gcode !~ /M(?:109|104)/i;
+
                         printf $fh "%s\n", Slic3r::ConditionalGCode::apply_math($gcodegen->placeholder_parser->process($self->config->between_objects_gcode));
+                        #printf $fh "%s\n", $gcodegen->placeholder_parser->process($self->config->between_objects_gcode);
+
+                        # introduce an additional z-offset for intentional air printing (e.g. sequential objects with embedded 3d printing)
+                        # note: first object printed cannot be floating to avoid inadvertent air printing
+                        if ($Slic3r::GUI::Settings->{_}{model_coords}) {
+                            $cur_obj_specific_z_offset = $object->model_object()->bounding_box()->z_min();
+                            print $fh $gcodegen->object_specific_z_offset($cur_obj_specific_z_offset, $cur_z_pos);
+                            print $fh "; applying object specific z-offset\n";
+                        }
                     }
+                    
+                    
                     $self->process_layer($layer, [$copy]);
+                    $cur_z_pos = $layer->print_z + $cur_obj_specific_z_offset;
                 }
+                
                 $self->flush_filters;
                 $finished_objects++;
                 $self->_second_layer_things_done(0);
@@ -446,7 +469,9 @@ sub process_layer {
         $pp->set('layer_z'   => $layer->print_z);
         $gcode .= Slic3r::ConditionalGCode::apply_math($pp->process($self->print->config->before_layer_gcode) . "\n");
     }
+    
     $gcode .= $self->_gcodegen->change_layer($layer->as_layer);  # this will increase $self->_gcodegen->layer_index
+    
     if ($self->print->config->layer_gcode) {
         my $pp = $self->_gcodegen->placeholder_parser->clone;
         $pp->set('layer_num' => $self->_gcodegen->layer_index);
