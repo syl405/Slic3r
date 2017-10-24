@@ -223,6 +223,7 @@ sub export {
         
         my $finished_objects = 0;
         my $cur_obj_specific_z_offset = 0;
+        my $cur_z_pos = 0;
         for my $obj_idx (@obj_idx) {
             my $object = $self->objects->[$obj_idx];
             for my $copy (@{ $self->objects->[$obj_idx]->_shifted_copies }) {
@@ -241,8 +242,8 @@ sub export {
                     );
                     # reset z-zero back to true bed zero before applying object-specific offset for next object
                     if ($cur_obj_specific_z_offset != 0) {
-                        print $fh $gcodegen->object_specific_z_offset(-1 * $cur_obj_specific_z_offset);
-                        print $fh "G92 Z0 ; resetting object specific z-offset\n";
+                        print $fh $gcodegen->object_specific_z_offset(0, $cur_z_pos);
+                        print $fh "; resetting object specific z-offset\n";
                         $cur_obj_specific_z_offset = 0;
                     }
                     $gcodegen->set_enable_cooling_markers(1);
@@ -256,6 +257,7 @@ sub export {
                     # if we are printing the bottom layer of an object, and we have already finished
                     # another one, set first layer temperatures. this happens before the Z move
                     # is triggered, so machine has more time to reach such temperatures
+
                     if ($layer->id == 0 && $finished_objects > 0) {
                         printf $fh $gcodegen->writer->set_bed_temperature($self->config->first_layer_bed_temperature),
                             if $self->config->first_layer_bed_temperature
@@ -269,13 +271,14 @@ sub export {
                         # note: first object printed cannot be floating to avoid inadvertent air printing
                         if ($Slic3r::GUI::Settings->{_}{model_coords}) {
                             $cur_obj_specific_z_offset = $object->model_object()->bounding_box()->z_min();
-                            print $fh $gcodegen->object_specific_z_offset($cur_obj_specific_z_offset);
-                            print $fh "G92 Z0 \n"
+                            print $fh $gcodegen->object_specific_z_offset($cur_obj_specific_z_offset, $cur_z_pos);
+                            print $fh "; applying object specific z-offset\n";
                         }
                     }
                     
                     
                     $self->process_layer($layer, [$copy]);
+                    $cur_z_pos = $layer->print_z + $cur_obj_specific_z_offset;
                 }
                 
                 $self->flush_filters;

@@ -283,7 +283,7 @@ GCode::preamble()
 }
 
 std::string
-GCode::object_specific_z_offset(const double object_z_offset)
+GCode::object_specific_z_offset(const double object_z_offset, const double current_z_pos)
 {
     std::string gcode = "G92 Z";
     
@@ -297,8 +297,7 @@ GCode::object_specific_z_offset(const double object_z_offset)
         each object in the model coordinate system. This means floating objects
         (air printing) is possible, which is useful for applications such as
         embedded 3D printing using gel supports.*/
-    gcode += (-1 * object_z_offset);
-    gcode += ";apply object-specific Z-offset"
+    gcode += std::to_string(current_z_pos - object_z_offset);
 
     return gcode;
 }
