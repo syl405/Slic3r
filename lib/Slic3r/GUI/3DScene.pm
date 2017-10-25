@@ -1427,7 +1427,7 @@ sub load_print_object_toolpaths {
     my $color_by_extruder = $self->color_toolpaths_by eq 'extruder';
     
     foreach my $layer (@layers) {
-        my $top_z = $layer->print_z;
+        my $top_z = $layer->print_z + $object->model_object()->bounding_box()->z_min();
         foreach my $copy (@{ $object->_shifted_copies }) {
             foreach my $layerm (@{$layer->regions}) {
                 if ($object->step_done(STEP_PERIMETERS)) {
