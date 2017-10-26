@@ -22,7 +22,7 @@ while (<>) {
 	}
 
 	# if we encounter an extrusion word and we are not using tool 0 (the FFF tool)
-	if (/G1.*\s+E\s*(\d+(\.\d+)?)/ && !/; unretract/) {
+	if (/G1.*\s+E\s*(\d+(\.\d+)?)/ && !/; unretract/ && !/; retract/) {
 		if (!$in_extrusion) { # if we are not currently in an extrusion, i.e. starting to extrude now
 			$l = $l . "M7\n"; #valve open
 			$l = $l . $_;
@@ -38,7 +38,7 @@ while (<>) {
 	}
 	else { # no extrusion word in current line
 		if ($in_extrusion) { # this could be end of an extrusion move
-			if (/^G1/ && (/X/ || /Y/)) { # extrusion is really done
+			if (/^G1/ && (/X/ || /Y/ || /Z/ || /; retract/)) { # extrusion is really done
 				$l = $l . "M9\n"; #valve close
 				$l = $l . $_; #concantenate current line
 				$in_extrusion = 0;
