@@ -766,9 +766,11 @@ GCode::set_extruder(unsigned int extruder_id)
     if (!this->writer.multiple_extruders) {
         return this->writer.toolchange(extruder_id);
     }
-    
+
     // prepend retraction on the current extruder
     std::string gcode = this->retract(true);
+
+    // raise tool to current height
     
     // append custom toolchange G-code
     if (this->writer.extruder() != NULL && !this->config.toolchange_gcode.value.empty()) {
