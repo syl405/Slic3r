@@ -242,7 +242,7 @@ sub export {
                     );
                     # reset z-zero back to true bed zero before applying object-specific offset for next object
                     if ($cur_obj_specific_z_offset != 0) {
-                        print $fh $gcodegen->object_specific_z_offset(0, $cur_z_pos);
+                        print $fh $gcodegen->writer->object_specific_z_offset(-$cur_obj_specific_z_offset);
                         print $fh "; resetting object specific z-offset\n";
                         $cur_obj_specific_z_offset = 0;
                     }
@@ -273,14 +273,15 @@ sub export {
                         # note: first object printed cannot be floating to avoid inadvertent air printing
                         if ($Slic3r::GUI::Settings->{_}{model_coords}) {
                             $cur_obj_specific_z_offset = $object->model_object()->bounding_box()->z_min();
-                            print $fh $gcodegen->object_specific_z_offset($cur_obj_specific_z_offset, $cur_z_pos);
+                            print $fh $gcodegen->writer->object_specific_z_offset($cur_obj_specific_z_offset);
                             print $fh "; applying object specific z-offset\n";
                         }
                     }
                     
                     
                     $self->process_layer($layer, [$copy]);
-                    $cur_z_pos = $layer->print_z + $cur_obj_specific_z_offset;
+                    #$cur_z_pos = $layer->print_z + $cur_obj_specific_z_offset;
+                    $cur_z_pos = $gcodegen->writer->get_position()->z;
                 }
                 
                 $self->flush_filters;

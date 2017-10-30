@@ -584,4 +584,26 @@ GCodeWriter::unlift()
     return gcode;
 }
 
+std::string
+GCodeWriter::object_specific_z_offset(const double object_z_offset)
+{
+    std::string gcode = "G92 Z";
+    
+    /*  Perform a *silent* move to z_offset: we need this to initialize the Z
+        position of our writer object so that any initial lift taking place
+        before the first layer change will raise the extruder from the correct
+        initial Z instead of 0.  
+
+        This takes place if the use-model-coordinates option is enabled such
+        that the G-code exported by Slic3r fully respects the XYZ position of
+        each object in the model coordinate system. This means floating objects
+        (air printing) is possible, which is useful for applications such as
+        embedded 3D printing using gel supports.*/
+    gcode += std::to_string(this->_pos.z - object_z_offset);
+
+    this->_pos.z = this->_pos.z - object_z_offset;
+
+    return gcode;
+}
+
 }

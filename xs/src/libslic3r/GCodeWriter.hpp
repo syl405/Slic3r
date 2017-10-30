@@ -51,6 +51,7 @@ public:
     std::string lift();
     std::string unlift();
     Pointf3 get_position() const { return this->_pos; }
+    std::string object_specific_z_offset(const double object_z_offset = 0);
 private:
     std::string _extrusion_axis;
     Extruder* _extruder;

@@ -427,6 +427,7 @@ class PrintConfig : public GCodeConfig
     ConfigOptionFloat               extruder_clearance_height;
     ConfigOptionFloat               extruder_clearance_radius;
     ConfigOptionPoints              extruder_offset;
+    ConfigOptionFloats              extruder_length_offset;
     ConfigOptionBool                fan_always_on;
     ConfigOptionInt                 fan_below_layer_time;
     ConfigOptionStrings             filament_colour;
@@ -489,6 +490,7 @@ class PrintConfig : public GCodeConfig
         OPT_PTR(extruder_clearance_height);
         OPT_PTR(extruder_clearance_radius);
         OPT_PTR(extruder_offset);
+        OPT_PTR(extruder_length_offset);
         OPT_PTR(fan_always_on);
         OPT_PTR(fan_below_layer_time);
         OPT_PTR(filament_colour);

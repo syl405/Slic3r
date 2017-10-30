@@ -410,6 +410,39 @@ class ConfigOptionPoints : public ConfigOptionVector<Pointf>
     bool deserialize(std::string str, bool append = false);
 };
 
+// class ConfigOptionPoint3s : public ConfigOptionVector<Pointf3>
+// {
+//     public:
+//     ConfigOptionPoint3s() {};
+//     ConfigOptionPoint3s(const std::vector<Pointf3> _values) : ConfigOptionVector<Pointf3>(_values) {};
+//     ConfigOptionPoint3s* clone() const { return new ConfigOptionPoint3s(this->values); };
+    
+//     std::string serialize() const {
+//         std::ostringstream ss;
+//         for (Pointf3s::const_iterator it = this->values.begin(); it != this->values.end(); ++it) {
+//             if (it - this->values.begin() != 0) ss << ",";
+//             ss << it->x;
+//             ss << "x";
+//             ss << it->y;
+//             ss << "y";
+//             ss << it->z;
+//         }
+//         return ss.str();
+//     };
+    
+//     std::vector<std::string> vserialize() const {
+//         std::vector<std::string> vv;
+//         for (Pointf3s::const_iterator it = this->values.begin(); it != this->values.end(); ++it) {
+//             std::ostringstream ss;
+//             ss << *it;
+//             vv.push_back(ss.str());
+//         }
+//         return vv;
+//     };
+    
+//     bool deserialize(std::string str, bool append = false);
+// };
+
 
 /// \brief Represents a boolean flag 
 class ConfigOptionBool : public ConfigOptionSingle<bool>
@@ -547,6 +580,7 @@ enum ConfigOptionType {
     coPoint,
     /// vector of 2d points. Currently used for the definition of the print bed and for the extruder offsets.
     coPoints,
+    /// single 3d point.
     coPoint3,
     /// single boolean value
     coBool,

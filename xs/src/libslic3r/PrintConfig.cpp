@@ -331,6 +331,18 @@ PrintConfigDef::PrintConfigDef()
         def->default_value = opt;
     }
 
+
+    def = this->add("extruder_length_offset", coFloats);
+    def->label = "Extruder length offset";
+    def->tooltip = "Z-direction offset for extruders/tools of varying lengths (for sequential printing)";
+    def->sidetext = "mm";
+    def->cli = "extruder-length-offset=f@";
+    {
+        ConfigOptionFloats* opt = new ConfigOptionFloats();
+        opt->values.push_back(0);
+        def->default_value = opt;
+    }
+
     def = this->add("extrusion_axis", coString);
     def->label = "Extrusion axis";
     def->tooltip = "Use this option to set the axis letter associated to your printer's extruder (usually E but some printers use A).";

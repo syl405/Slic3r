@@ -283,26 +283,6 @@ GCode::preamble()
 }
 
 std::string
-GCode::object_specific_z_offset(const double object_z_offset, const double current_z_pos)
-{
-    std::string gcode = "G92 Z";
-    
-    /*  Perform a *silent* move to z_offset: we need this to initialize the Z
-        position of our writer object so that any initial lift taking place
-        before the first layer change will raise the extruder from the correct
-        initial Z instead of 0.  
-
-        This takes place if the use-model-coordinates option is enabled such
-        that the G-code exported by Slic3r fully respects the XYZ position of
-        each object in the model coordinate system. This means floating objects
-        (air printing) is possible, which is useful for applications such as
-        embedded 3D printing using gel supports.*/
-    gcode += std::to_string(current_z_pos - object_z_offset);
-
-    return gcode;
-}
-
-std::string
 GCode::change_layer(const Layer &layer)
 {
     this->layer = &layer;
@@ -770,7 +750,11 @@ GCode::set_extruder(unsigned int extruder_id)
     // prepend retraction on the current extruder
     std::string gcode = this->retract(true);
 
-    // raise tool to current height
+    // raise tool to current z position plus extruder length offset for next extruder
+    double initial_height = this->writer.get_position().z;
+    if (this->config.extruder_length_offset.get_at(extruder_id)) {
+        gcode += this->writer.travel_to_z(initial_height+this->config.extruder_length_offset.get_at(extruder_id));
+    }
     
     // append custom toolchange G-code
     if (this->writer.extruder() != NULL && !this->config.toolchange_gcode.value.empty()) {
@@ -791,6 +775,9 @@ GCode::set_extruder(unsigned int extruder_id)
     // set the new extruder to the operating temperature
     if (this->ooze_prevention.enable)
         gcode += this->ooze_prevention.post_toolchange(*this);
+
+    // restore starting height
+    gcode += this->writer.travel_to_z(initial_height);
     
     return gcode;
 }

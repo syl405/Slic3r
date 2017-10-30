@@ -46,6 +46,7 @@
     std::string unretract();
     std::string lift();
     std::string unlift();
+    std::string object_specific_z_offset(double object_z_offset);
     Clone<Pointf3> get_position() const;
 %{
 

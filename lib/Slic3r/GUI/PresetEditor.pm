@@ -1212,7 +1212,7 @@ sub options {
         use_firmware_retraction pressure_advance vibration_limit
         use_volumetric_e
         start_gcode end_gcode before_layer_gcode layer_gcode toolchange_gcode between_objects_gcode
-        nozzle_diameter extruder_offset min_layer_height max_layer_height
+        nozzle_diameter extruder_offset extruder_length_offset min_layer_height max_layer_height
         retract_length retract_lift retract_lift_to_target retract_speed retract_restart_extra retract_before_travel retract_layer_change wipe
         retract_length_toolchange retract_restart_extra_toolchange retract_lift_above retract_lift_below
         printer_settings_id
@@ -1457,7 +1457,7 @@ sub _extruders_count_changed {
     $self->_update;
 }
 
-sub _extruder_options { qw(nozzle_diameter min_layer_height max_layer_height extruder_offset retract_length retract_lift retract_lift_to_target retract_lift_above retract_lift_below retract_speed retract_restart_extra retract_before_travel wipe
+sub _extruder_options { qw(nozzle_diameter min_layer_height max_layer_height extruder_offset extruder_length_offset retract_length retract_lift retract_lift_to_target retract_lift_above retract_lift_below retract_speed retract_restart_extra retract_before_travel wipe
     retract_layer_change retract_length_toolchange retract_restart_extra_toolchange) }
 
 sub _build_extruder_pages {
@@ -1494,6 +1494,10 @@ sub _build_extruder_pages {
         {
             my $optgroup = $page->new_optgroup('Position (for multi-extruder printers)');
             $optgroup->append_single_option_line('extruder_offset', $extruder_idx);
+        }
+        {
+            my $optgroup = $page->new_optgroup('Length offset (for sequential printing with different length tools)');
+            $optgroup->append_single_option_line('extruder_length_offset', $extruder_idx);
         }
         {
             my $optgroup = $page->new_optgroup('Retraction');
