@@ -25,13 +25,14 @@ while (<>) {
 	if (/G1.*\s+E\s*(\d+(\.\d+)?)/ && !/; unretract/ && !/; retract/) {
 		if (!$in_extrusion) { # if we are not currently in an extrusion, i.e. starting to extrude now
 			$l = $l . "M7\n"; #valve open
+			s/E\d+\.\d+//;
 			$l = $l . $_;
 			$in_extrusion = 1;
 			next;
 		}
 		else {
 			# chop off the extrusion word and reattach rest of line then append
-			#$l = $l . s/E\d+\.\d+\s*([\r\n\;\(].*)/" $1"/es;
+			s/E\d+\.\d+//;
 			$l = $l . $_;
 			next;
 		}
