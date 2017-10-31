@@ -580,6 +580,7 @@ GCodeWriter::unlift()
     if (this->_lifted > 0) {
         gcode += this->_travel_to_z(this->_pos.z - this->_lifted, "restore layer Z");
         this->_lifted = 0;
+        gcode += "G4 S5 ; pause to prevent step skipping\n";
     }
     return gcode;
 }
