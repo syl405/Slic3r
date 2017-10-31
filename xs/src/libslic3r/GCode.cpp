@@ -751,7 +751,7 @@ GCode::set_extruder(unsigned int extruder_id)
     std::string gcode = this->retract(true);
 
     // raise tool to current z position plus extruder length offset for next extruder
-    double initial_height = this->writer.get_position().z;
+    double initial_height = this->writer.get_nominal_height();
     if (this->config.extruder_length_offset.get_at(extruder_id)) {
         gcode += this->writer.travel_to_z(initial_height+this->config.extruder_length_offset.get_at(extruder_id));
     }
