@@ -621,6 +621,41 @@ GCode::_extrude(ExtrusionPath path, std::string description, double speed)
     return gcode;
 }
 
+std::string
+GCode::pour_reservoir(double pour_vol, const Pointf3 &centroid)
+{
+    // initialize G-code for the travel move
+    std::string gcode;
+
+    // declare start of pour sequence
+    gcode += "; BEGIN POUR SEQUENCE\n";
+
+    //remember current tool height (assume this is safe height)
+    double safe_z = this->writer.get_position().z;
+
+    // move above the centroid
+    gcode += this->writer.travel_to_xy(this->point_to_gcode(Point(centroid.x, centroid.y)));
+
+    // plunge down to correct pour height
+    gcode += this->writer.travel_to_z(centroid.z);
+
+    // calculate volume to dispense
+    double dE = this->writer.extruder()->e_per_mm3 * pour_vol;
+
+    // dispense metered volume of reservoir fluid
+    gcode += this->writer.extrude_here(dE, 34, "pour reservoir at centroid");
+
+    // lift tool back to safe z
+    gcode += this->writer.travel_to_z(safe_z);
+
+    // declare end of pour sequence
+    gcode += "; END POUR SEQUENCE\n";
+
+    return gcode;
+}
+
+
+
 // This method accepts &point in print coordinates.
 std::string
 GCode::travel_to(const Point &point, ExtrusionRole role, std::string comment)

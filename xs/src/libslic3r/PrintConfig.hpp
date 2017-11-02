@@ -184,6 +184,7 @@ class PrintObjectConfig : public virtual StaticPrintConfig
     ConfigOptionFloatOrPercent      support_material_threshold;
     ConfigOptionFloat               xy_size_compensation;
     ConfigOptionInt                 sequential_print_priority;
+    ConfigOptionBool                is_reservoir;
     
     PrintObjectConfig(bool initialize = true) : StaticPrintConfig() {
         if (initialize)
@@ -221,6 +222,7 @@ class PrintObjectConfig : public virtual StaticPrintConfig
         OPT_PTR(support_material_threshold);
         OPT_PTR(xy_size_compensation);
         OPT_PTR(sequential_print_priority);
+        OPT_PTR(is_reservoir);
         
         return NULL;
     };

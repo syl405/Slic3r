@@ -1704,6 +1704,13 @@ PrintConfigDef::PrintConfigDef()
     def->tooltip ="Set this to alter object priority for sequential printing. Objects are first sorted by priority (smaller integers print first), then by height.";
     def->cli = "sequential-print-priority=i";
     def->default_value = new ConfigOptionInt(0);
+
+    def = this->add("is_reservoir", coBool);
+    def->label = "Is Reservoir?";
+    def->category = "Advanced";
+    def->tooltip ="Set this to enable reservoir pouring for this object";
+    def->cli = "is_reservoir!";
+    def->default_value = new ConfigOptionBool(false);
 }
 
 const PrintConfigDef print_config_def;

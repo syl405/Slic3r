@@ -226,6 +226,13 @@ sub export {
         my $cur_z_pos = 0;
         for my $obj_idx (@obj_idx) {
             my $object = $self->objects->[$obj_idx];
+
+            if ($object->config->is_reservoir) {
+                $self->process_reservoir($object);
+                next; #skip normal layer-wise processing for reservoir objects
+            }
+
+
             for my $copy (@{ $self->objects->[$obj_idx]->_shifted_copies }) {
                 # move to the origin position for the copy we're going to print.
                 # this happens before Z goes down to layer 0 again, so that 
@@ -375,6 +382,32 @@ sub _print_first_layer_temperature {
         printf {$self->fh} $self->_gcodegen->writer->set_temperature($temp, $wait, $t) if $temp > 0;
     }
 }
+
+
+# Called for each reservoir object
+# First a $gcode string is collected,
+# then filtered and finally written to a file $fh.
+sub process_reservoir {
+    my $self = shift;
+    my ($object) = @_;
+    my $gcode = "";
+
+    # get volume from mesh
+    my $pour_vol = $object->model_object()->mesh()->volume();
+
+    # get centroid from mesh
+    my $centroid = $object->model_object()->mesh()->bounding_box()->center();
+
+    # set correct extruder for reservoir pour
+    # TO-DO: add reservoir tool as config instead of hardcoding
+    $gcode .= $self->_gcodegen->set_extruder(1);
+
+    # append pouring Gcode
+    $gcode .= $self->_gcodegen->pour_reservoir($pour_vol, $centroid);
+
+    print {$self->fh} $gcode;
+}
+
 
 # Called per object's layer.
 # First a $gcode string is collected,

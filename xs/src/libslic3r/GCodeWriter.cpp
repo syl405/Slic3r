@@ -429,6 +429,20 @@ GCodeWriter::extrude_to_xy(const Pointf &point, double dE, const std::string &co
 }
 
 std::string
+GCodeWriter::extrude_here(double dE, double extrusion_speed, const std::string &comment)
+{
+    this->_extruder->extrude(dE);
+    
+    std::ostringstream gcode;
+    gcode << "G1"
+          <<  " " << this->_extrusion_axis << E_NUM(this->_extruder->E)
+          <<  "F" << extrusion_speed;
+    COMMENT(comment);
+    gcode << "\n";
+    return gcode.str();
+}
+
+std::string
 GCodeWriter::extrude_to_xyz(const Pointf3 &point, double dE, const std::string &comment)
 {
     this->_pos = point;
