@@ -8,7 +8,7 @@ my $f = 0;
 # read stdin and any/all files passed as parameters one line at a time
 while (<>) {
 	# if we find a Z word, save it
-	$f = $1 if /F\s*(\d+(\.\d+)?)/;
+	$f = $1 if /^G1\s+.*\s+F(\d+(\.\d+)?)/;
 
 	# if we don't have Z, but we do have X and Y
 	if (!/F/ && /X/ && /Y/ && $f) {
