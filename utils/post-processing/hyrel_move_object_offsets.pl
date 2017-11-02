@@ -33,7 +33,6 @@ while (<>) {
 		$outstanding_offset += (-$1 + $z);
 		$z = $1;
 		$offsets_pending = 1;
-		print or die $!;
 		next; #gobble up existing G92 commands
 	}
 
@@ -42,10 +41,13 @@ while (<>) {
 		print or die $!; #print out toolchange command
 		if ($offsets_pending) {
 			$z_ref = $outstanding_offset - $prevailing_offset;
-			print "G1 Z$z_ref\n" or die $!; #move to z-zero for current object
+			print "G4 S50 ; pause to avoid step skipping\n" or die $!;
+			print "G1 Z$z_ref F900\n" or die $!; #move to z-zero for current object
+			print "G4 S50 ; pause to avoid step skipping\n" or die $!;
 			/^T(\d)/;
 			$cur_tool_offset = $tool_z_offsets[$1];
 			print "G92 Z-$cur_tool_offset\n" or die $!; #zero out z-axis here
+			print "G4 S50 ; pause to avoid step skipping\n" or die $!;
 			$prevailing_offset = $outstanding_offset;
 			$offsets_pending = 0;
 		}
