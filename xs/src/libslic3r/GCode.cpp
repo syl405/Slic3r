@@ -643,7 +643,7 @@ GCode::pour_reservoir(double pour_vol, const Pointf3 &centroid)
     double dE = this->writer.extruder()->e_per_mm3 * pour_vol;
 
     // dispense metered volume of reservoir fluid
-    gcode += this->writer.extrude_here(dE, 34, "pour reservoir at centroid");
+    gcode += this->writer.extrude_here(dE, 34, "pour " + std::to_string(pour_vol) + " mm3 reservoir at centroid");
 
     // lift tool back to safe z
     gcode += this->writer.travel_to_z(safe_z);

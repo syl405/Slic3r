@@ -223,14 +223,9 @@ sub export {
         
         my $finished_objects = 0;
         my $cur_obj_specific_z_offset = 0;
-        my $cur_z_pos = 0;
         for my $obj_idx (@obj_idx) {
             my $object = $self->objects->[$obj_idx];
 
-            if ($object->config->is_reservoir) {
-                $self->process_reservoir($object);
-                next; #skip normal layer-wise processing for reservoir objects
-            }
 
 
             for my $copy (@{ $self->objects->[$obj_idx]->_shifted_copies }) {
@@ -258,7 +253,8 @@ sub export {
                     # disable motion planner when traveling to first object point
                     $gcodegen->avoid_crossing_perimeters->set_disable_once(1);
                 }
-                
+
+
                 my @layers = sort { $a->print_z <=> $b->print_z } @{$object->layers}, @{$object->support_layers};
                 for my $layer (@layers) {
                     # if we are printing the bottom layer of an object, and we have already finished
@@ -278,17 +274,43 @@ sub export {
 
                         # introduce an additional z-offset for intentional air printing (e.g. sequential objects with embedded 3d printing)
                         # note: first object printed cannot be floating to avoid inadvertent air printing
-                        if ($Slic3r::GUI::Settings->{_}{model_coords}) {
+                        if ($Slic3r::GUI::Settings->{_}{model_coords} && !$object->config->is_reservoir) {
                             $cur_obj_specific_z_offset = $object->model_object()->bounding_box()->z_min();
                             print $fh $gcodegen->writer->object_specific_z_offset($cur_obj_specific_z_offset);
-                            print $fh "; applying object specific z-offset\n";
+                            my $obj_vol = $object->model_object()->mesh()->volume();
+                            my $layer_id = $layer->id;
+                            print $fh "; applying object specific z-offset of $cur_obj_specific_z_offset for object of vol $obj_vol on layer $layer_id\n";
                         }
                     }
                     
+                    if ($object->config->is_reservoir) {
+                        printf $fh "%s\n", Slic3r::ConditionalGCode::apply_math($gcodegen->placeholder_parser->process($self->config->between_objects_gcode));
+
+                        my $gcode ="";
+                        if ($self->print->config->before_layer_gcode) {
+                            my $pp = $self->_gcodegen->placeholder_parser->clone;
+                            $pp->set('layer_num' => $self->_gcodegen->layer_index + 1);
+                            $pp->set('layer_z'   => $object->model_object()->bounding_box()->z_max());
+                            $gcode .= Slic3r::ConditionalGCode::apply_math($pp->process($self->print->config->before_layer_gcode) . "\n");
+                        }
+                        
+                        my @layers = sort { $a->print_z <=> $b->print_z } @{$object->layers}, @{$object->support_layers};
+                        $gcode .= $self->_gcodegen->change_layer($layers[-1]->as_layer);  # this will increase $self->_gcodegen->layer_index
+                        
+                        if ($self->print->config->layer_gcode) {
+                            my $pp = $self->_gcodegen->placeholder_parser->clone;
+                            $pp->set('layer_num' => $self->_gcodegen->layer_index);
+                            $pp->set('layer_z'   => $object->model_object()->bounding_box()->z_max());
+                            $gcode .= Slic3r::ConditionalGCode::apply_math($pp->process($self->print->config->layer_gcode) . "\n");
+                        }
+
+                        print {$self->fh} $gcode;
+                        $self->process_reservoir($object);    
+                        last;
+                    } else {
+                        $self->process_layer($layer, [$copy]);
+                    }
                     
-                    $self->process_layer($layer, [$copy]);
-                    #$cur_z_pos = $layer->print_z + $cur_obj_specific_z_offset;
-                    $cur_z_pos = $gcodegen->writer->get_position()->z;
                 }
                 
                 $self->flush_filters;
@@ -405,7 +427,17 @@ sub process_reservoir {
     # append pouring Gcode
     $gcode .= $self->_gcodegen->pour_reservoir($pour_vol, $centroid);
 
+    #debug
+    my $xcen;
+    my $ycen;
+    my $zcen;
+
+    $xcen = $centroid->x();
+    $ycen = $centroid->y();
+    $zcen = $centroid->z();
+
     print {$self->fh} $gcode;
+    print {$self->fh} "; centroid: <$xcen,$ycen,$zcen>\n";
 }
 
 

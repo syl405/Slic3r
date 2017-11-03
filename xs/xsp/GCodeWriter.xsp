@@ -39,6 +39,8 @@
     bool will_move_z(double z);
     std::string extrude_to_xy(Pointf* point, double dE, std::string comment = std::string())
         %code{% RETVAL = THIS->extrude_to_xy(*point, dE, comment); %};
+    std::string extrude_here(double dE, double extrusion_speed, std::string comment = std::string())
+        %code{% RETVAL = THIS->extrude_here(dE, extrusion_speed, comment); %};
     std::string extrude_to_xyz(Pointf3* point, double dE, std::string comment = std::string())
         %code{% RETVAL = THIS->extrude_to_xyz(*point, dE, comment); %};
     std::string retract();

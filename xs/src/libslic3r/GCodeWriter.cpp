@@ -436,7 +436,7 @@ GCodeWriter::extrude_here(double dE, double extrusion_speed, const std::string &
     std::ostringstream gcode;
     gcode << "G1"
           <<  " " << this->_extrusion_axis << E_NUM(this->_extruder->E)
-          <<  "F" << extrusion_speed;
+          <<  " F" << extrusion_speed;
     COMMENT(comment);
     gcode << "\n";
     return gcode.str();

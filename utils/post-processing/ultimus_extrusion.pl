@@ -16,12 +16,24 @@ while (<>) {
 		next
 	}
 
-	if ($cur_tool == 0) { #ignore everything for the FFF tool (tool 0)
+	if ($cur_tool == 0) { #ignore everything for the FFF tool (tool 0) or the reservoir tool
 		print or die $!;
 		next;
 	}
 
-	# if we encounter an extrusion word and we are not using tool 0 (the FFF tool)
+	if ($cur_tool == 1) {
+		if (/; pour (\d+(\.\d+)?) mm3 reservoir at centroid/) {
+			my $flow_time = int(($1/113.3)*1000); # empirically, 113.3 mm3 per sec at 40 psi thru 15 Ga needle
+			print "M7\n";
+			print "G4 S$flow_time ; extruding reservoir\n";
+			print "M9\n";
+			next;
+		}
+		print or die $!;
+		next;
+	}
+
+	# if we encounter an extrusion word and we are not using tool 0 (the FFF tool) nor tool 1 (the reservoir tool)
 	if (/G1.*\s+E\s*(\d+(\.\d+)?)/ && !/; unretract/ && !/; retract/) {
 		if (!$in_extrusion) { # if we are not currently in an extrusion, i.e. starting to extrude now
 			$l = $l . "M7\n"; #valve open

@@ -29,7 +29,7 @@ while (<>) {
 	}
 	
 	# keep running tally of G92 offsets
-	if (/G92\s+Z(\d+(?:\.\d+)?)/) {
+	if (/G92\s+Z(-?\d+(?:\.\d+)?)/) {
 		$outstanding_offset += (-$1 + $z);
 		$z = $1;
 		$offsets_pending = 1;
