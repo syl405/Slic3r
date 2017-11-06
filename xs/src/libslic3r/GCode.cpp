@@ -634,7 +634,8 @@ GCode::pour_reservoir(double pour_vol, const Pointf3 &centroid)
     double safe_z = this->writer.get_position().z;
 
     // move above the centroid
-    gcode += this->writer.travel_to_xy(this->point_to_gcode(Point(centroid.x, centroid.y)));
+    Pointf extruder_offset = EXTRUDER_CONFIG(extruder_offset);
+    gcode += this->writer.travel_to_xy(Pointf(centroid.x-extruder_offset.x,centroid.y-extruder_offset.y));
 
     // plunge down to correct pour height
     gcode += this->writer.travel_to_z(centroid.z);
