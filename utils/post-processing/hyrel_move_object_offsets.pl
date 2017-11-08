@@ -11,6 +11,7 @@ my $offsets_pending = 0; #toggle of whether there are new offsets to apply
 my $z_ref = 0; #target z to go to (in prevailing coordinate system, i.e. z') before zeroing out z axis.
 my @tool_z_offsets = (0, 0, 0, 0); #initialize tool length ofsets (M6 offsets for hyrel) to zero
 my $cur_tool_offset = 0;
+my $bottom_layer_centroid_line = "";
 
 # read stdin and any/all files passed as parameters one line at a time
 while (<>) {
@@ -36,10 +37,16 @@ while (<>) {
 		next; #gobble up existing G92 commands
 	}
 
+	if (/G1 X\d+(\.\d+)? Y\d+(\.\d+)? F\d+(\.\d+)? ; move to centroid of bottom layer/) {
+		$bottom_layer_centroid_line = $_;
+		#next; #do not gobble the move before toolchange so that we move before dropping
+	}
+
 	# if we find a toolchange command, apply any outstanding z offsets AFTER the toolchange
 	if (/^T(\d)/) {
 		print or die $!; #print out toolchange command
 		if ($offsets_pending) {
+			print $bottom_layer_centroid_line;
 			$z_ref = $outstanding_offset - $prevailing_offset;
 			print "G4 S50 ; pause to avoid step skipping\n" or die $!;
 			print "G1 Z$z_ref F900\n" or die $!; #move to z-zero for current object

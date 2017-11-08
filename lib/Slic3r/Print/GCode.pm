@@ -275,6 +275,11 @@ sub export {
                         # introduce an additional z-offset for intentional air printing (e.g. sequential objects with embedded 3d printing)
                         # note: first object printed cannot be floating to avoid inadvertent air printing
                         if ($Slic3r::GUI::Settings->{_}{model_coords} && !$object->config->is_reservoir) {
+                            #travel to centroid of bottom layer
+                            my $cur_bottom_layer_centroid = $layer->slices->convex_hull()->centroid;
+                            print $fh $gcodegen->travel_to($cur_bottom_layer_centroid, EXTR_ROLE_NONE,
+                        'move to centroid of bottom layer',);
+                            #apply offset
                             $cur_obj_specific_z_offset = $object->model_object()->bounding_box()->z_min();
                             print $fh $gcodegen->writer->object_specific_z_offset($cur_obj_specific_z_offset);
                             my $obj_vol = $object->model_object()->mesh()->volume();
