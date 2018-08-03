@@ -261,7 +261,7 @@ sub export {
                     # another one, set first layer temperatures. this happens before the Z move
                     # is triggered, so machine has more time to reach such temperatures
 
-                    if ($layer->id == 0 && $finished_objects > 0) {
+                    if ($layer->id == 0 && $finished_objects >= 0) {
                         printf $fh $gcodegen->writer->set_bed_temperature($self->config->first_layer_bed_temperature),
                             if $self->config->first_layer_bed_temperature
                             && $self->config->has_heatbed

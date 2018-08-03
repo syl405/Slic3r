@@ -12,3 +12,7 @@ perl /home/shienyanglee/Desktop/Slic3r/utils/post-processing/hyrel_move_object_o
 echo "move object-specific offsets done"
 perl /home/shienyanglee/Desktop/Slic3r/utils/post-processing/pause_lift_unlift.pl "$filepath"
 echo "pause lift unlift done"
+perl /home/shienyanglee/Desktop/Slic3r/utils/post-processing/material_refills.pl "$filepath"
+echo "material refills done"
+perl /home/shienyanglee/Desktop/Slic3r/utils/post-processing/dribble_debuggin.pl "$filepath"
+echo "debug done"
